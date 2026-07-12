@@ -1,5 +1,16 @@
 # TMDB Data Platform — Initial Project Plan
 
+> **Amendment note (Phase 0, 2026-07-11)**: Sections 6, 11, 12, and 15 below
+> have been updated to reflect three architecture decisions made during
+> Phase 0 discovery — see `docs/architecture/architecture-decisions/`:
+> dbt now owns Gold-layer marts ([ADR-0002](./docs/architecture/architecture-decisions/adr-0002-dbt-for-gold-marts.md)),
+> the orchestrator choice (Airflow vs. Dagster) is not yet made
+> ([ADR-0001](./docs/architecture/architecture-decisions/adr-0001-orchestrator-choice.md), Status: Proposed),
+> and infrastructure now lives in a separate repo, `tmdb-data-platform-infra`
+> ([ADR-0003](./docs/architecture/architecture-decisions/adr-0003-two-repo-split.md)).
+> The rest of this document (scope, source system, data layers, SCD
+> strategy, phases) is unchanged from the original design.
+
 ## 1. Project Context
 
 We want to build an end-to-end data engineering project using the TMDB API as the main data source.
@@ -188,7 +199,13 @@ s3://tmdb-data-platform/checkpoints/
 s3://tmdb-data-platform/errors/
 ```
 
-### Apache Airflow
+### Orchestrator (Apache Airflow or Dagster — pending ADR-0001)
+
+The original plan assumed Airflow throughout; the orchestrator tool is now
+an open decision between self-hosted Airflow and Dagster OSS, with cost
+analyzed in `docs/deep-dives/orchestrator-airflow-vs-dagster.md` and the
+decision to be recorded in ADR-0001 (currently Status: Proposed). The
+responsibilities below apply regardless of which tool is chosen.
 
 Responsibilities:
 
@@ -256,14 +273,32 @@ Responsibilities:
 - Query Iceberg tables using SQL.
 - Validate results.
 - Explore datasets.
-- Serve initial analytical data marts.
+- Serve as the query engine dbt runs Gold-layer models against.
 - Connect to a BI tool.
+
+### dbt (added in Phase 0 — see ADR-0002)
+
+Responsibilities:
+
+- Build the Gold-layer data marts (Section 11) as SQL models over Silver
+  Iceberg tables, queried through Athena (`dbt-athena-community` adapter).
+- Provide model testing (uniqueness, not-null, referential integrity) and
+  documentation/lineage for the Gold layer specifically.
+
+Explicitly **not** responsible for: Bronze parsing, Silver SCD Type 2 merge
+logic, or snapshot fact construction — those remain PySpark/Glue. See
+`docs/architecture/architecture-decisions/adr-0002-dbt-for-gold-marts.md`
+for the full rationale, including why dbt's built-in `snapshot` feature was
+rejected for this project's multi-attribute SCD Type 2 requirements.
 
 ### Infrastructure as Code
 
 Preferred option:
 
 - Terraform.
+
+Lives in a separate repository, `tmdb-data-platform-infra`, split from this
+pipeline repo — see ADR-0003 and Section 15 below.
 
 Responsibilities:
 
@@ -713,6 +748,12 @@ dim_credit_job
 
 ## 11. Data Marts
 
+> All five marts below are implemented as **dbt models** under
+> `dbt/models/marts/`, materialized as tables in the Gold Athena schema —
+> see ADR-0002 and `docs/modeling/data-marts.md` for the physical design
+> (grain statements, staging layer, cross-mart conventions) that formalizes
+> this section.
+
 ## Movie Lifecycle Mart
 
 Purpose:
@@ -835,6 +876,20 @@ pipeline_duration
 ---
 
 ## 12. Orchestration Plan
+
+> **Pending ADR-0001**: the DAG shapes below are tool-agnostic (they
+> describe task/asset dependencies, not Airflow-specific syntax) and remain
+> valid regardless of which orchestrator is chosen. Once ADR-0001 is
+> resolved, translate these into either Airflow DAGs/task groups or Dagster
+> assets/jobs under `orchestration/`. See
+> `docs/architecture/data-flow.md` for the fully-detailed, corrected
+> sequencing of each flow (in particular: "Call Movie Changes" below refers
+> to the bulk `GET /movie/changes` discovery endpoint, confirmed in
+> `docs/source-analysis/tmdb-api-overview.md` — not the per-movie
+> `/movie/{id}/changes` endpoint). Also see the compaction-sequencing
+> constraint in `docs/deep-dives/scd2-iceberg-merge-patterns.md`: a
+> maintenance/compaction task must be added after `apply_scd2` in the Daily
+> Incremental DAG, sequenced strictly after it, never in parallel.
 
 ## Initial Load DAG
 
@@ -1002,6 +1057,12 @@ timestamp
 
 ## 15. Repository Structure
 
+> **Superseded by ADR-0003** — the single-monorepo layout originally
+> sketched here has been split into two repositories. This section is kept
+> for historical context; the current structure is below.
+
+### `tmdb-data-platform` (this repo — pipeline code)
+
 ```text
 tmdb-data-platform/
 |
@@ -1010,12 +1071,13 @@ tmdb-data-platform/
 ├── pyproject.toml
 ├── .env.example
 ├── .gitignore
+├── .github/workflows/
 |
 ├── docs/
 │   ├── architecture/
 │   │   ├── architecture-overview.md
 │   │   ├── data-flow.md
-│   │   └── architecture-decisions/
+│   │   └── architecture-decisions/   (ADR-0001, ADR-0002, ADR-0003, ...)
 │   |
 │   ├── source-analysis/
 │   │   ├── tmdb-api-overview.md
@@ -1024,22 +1086,20 @@ tmdb-data-platform/
 │   |
 │   ├── modeling/
 │   │   ├── conceptual-model.md
-│   │   ├── logical-model.md
 │   │   ├── scd-strategy.md
 │   │   └── data-marts.md
 │   |
-│   └── operations/
+│   ├── deep-dives/
+│   │   ├── iceberg-internals-and-glue.md
+│   │   ├── orchestrator-airflow-vs-dagster.md
+│   │   └── scd2-iceberg-merge-patterns.md
+│   |
+│   └── operations/                    (deferred to Phase 7)
 │       ├── runbook.md
 │       ├── data-quality.md
 │       └── incident-handling.md
 |
-├── infrastructure/
-│   └── terraform/
-│       ├── modules/
-│       ├── environments/
-│       └── main.tf
-|
-├── airflow/
+├── orchestration/    (Airflow- or Dagster-shaped, pending ADR-0001)
 │   ├── dags/
 │   ├── task_groups/
 │   ├── operators/
@@ -1054,17 +1114,28 @@ tmdb-data-platform/
 │   ├── schemas/
 │   └── tests/
 |
-├── glue/
+├── glue/                 (no gold/ — see ADR-0002)
 │   ├── bronze/
 │   ├── silver/
-│   ├── gold/
 │   ├── common/
 │   └── tests/
 |
-├── sql/
+├── dbt/                  (Gold marts only — see ADR-0002)
+│   ├── models/
+│   │   ├── staging/
+│   │   └── marts/
+│   │       ├── movie_lifecycle/
+│   │       ├── movie_performance/
+│   │       ├── talent_collaboration/
+│   │       ├── streaming_availability/
+│   │       └── data_quality/
+│   ├── tests/
+│   ├── macros/
+│   └── dbt_project.yml
+|
+├── sql/                  (no marts/ — moved to dbt/, see ADR-0002)
 │   ├── athena/
-│   ├── quality/
-│   └── marts/
+│   └── quality/
 |
 ├── config/
 │   ├── endpoints.yml
@@ -1072,7 +1143,7 @@ tmdb-data-platform/
 │   ├── data_quality.yml
 │   └── tables.yml
 |
-├── dashboards/
+├── dashboards/           (Phase 7, deferred)
 │   ├── analytics/
 │   └── monitoring/
 |
@@ -1080,6 +1151,30 @@ tmdb-data-platform/
     ├── unit/
     ├── integration/
     └── data/
+```
+
+### `tmdb-data-platform-infra` (sibling repo — Terraform only)
+
+```text
+tmdb-data-platform-infra/
+|
+├── README.md
+├── .gitignore
+├── .github/workflows/    (terraform fmt/validate/plan)
+├── main.tf
+├── variables.tf
+|
+├── modules/
+│   ├── s3/
+│   ├── iam/
+│   ├── glue/
+│   ├── glue-catalog/
+│   ├── orchestrator/     (empty pending ADR-0001)
+│   ├── networking/
+│   └── monitoring/
+|
+└── environments/
+    └── dev/
 ```
 
 ---
@@ -1342,6 +1437,11 @@ This milestone should prove:
 ---
 
 ## 21. Initial Documents to Create
+
+**Status: complete (Phase 0)** — all documents below exist, plus three
+additional deep-dive references (`docs/deep-dives/`) and three ADRs
+(`docs/architecture/architecture-decisions/`) covering decisions this list
+didn't originally anticipate (dbt scope, orchestrator choice, repo split).
 
 Before large-scale implementation, create:
 
