@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# dbt
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+dbt/profiles.yml
+
+# Airflow (if selected by ADR-0001)
+orchestration/dags/__pycache__/
+*.airflowignore
+airflow.db
+airflow-webserver.pid
+
+# Dagster (if selected by ADR-0001)
+.dagster_home/
+storage/
+
+# Secrets and local env
+.env
+*.pem
+*.key
+
+# Local data / notebooks
+*.ipynb_checkpoints/
+data/
+*.parquet
+*.csv
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

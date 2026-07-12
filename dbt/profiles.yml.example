@@ -1,0 +1,13 @@
+tmdb_data_platform:
+  target: dev
+  outputs:
+    dev:
+      type: athena
+      s3_staging_dir: "s3://tmdb-data-platform/athena-staging/"
+      s3_data_dir: "s3://tmdb-data-platform/gold/"
+      s3_data_naming: schema_table
+      region_name: us-east-1
+      schema: tmdb_gold
+      database: awsdatacatalog
+      work_group: tmdb-data-platform
+      threads: 4

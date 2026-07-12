@@ -1,0 +1,21 @@
+name: "tmdb_gold_marts"
+version: "1.0.0"
+config-version: 2
+
+profile: "tmdb_data_platform"
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  tmdb_gold_marts:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table
+      +schema: gold
