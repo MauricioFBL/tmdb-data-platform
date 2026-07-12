@@ -1,5 +1,13 @@
 # Data Flow
 
+> **STALE — pending rewrite (sprint task).** The flows below describe
+> Silver as a PySpark Glue job doing the SCD2 merge directly. Per
+> [ADR-0005](./architecture-decisions/adr-0005-silver-moves-to-dbt.md),
+> that step is now a `dbt snapshot` invocation via `dbt-glue`, triggered
+> after the Bronze Glue job, not a second Glue job. The step ordering and
+> watermark/compaction-sequencing logic are still correct — only the
+> "Silver Glue job" wording needs replacing.
+
 Traces how a single movie record actually moves through the platform, for
 each of the three flows `PROJECT_PLAN.md` Section 12 defines. This is the
 sequential/temporal companion to `architecture-overview.md`'s structural

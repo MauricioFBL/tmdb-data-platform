@@ -1,5 +1,15 @@
 # SCD Type 2 Merge Patterns on Iceberg
 
+> **STALE — pending rewrite (sprint task).** [ADR-0005](../architecture/architecture-decisions/adr-0005-silver-moves-to-dbt.md)
+> moved Silver's SCD2 processing from hand-rolled PySpark `MERGE INTO`
+> (described below) to dbt snapshots via `dbt-glue`. The conceptual content
+> here (hash-diff reasoning, overlap bugs, late-arriving-data risk,
+> compaction sequencing) is still valid and directly informs how the dbt
+> snapshot's source query must be designed — but the concrete SQL/PySpark
+> below no longer reflects the actual implementation. Do not copy the code
+> below as-is; treat it as the design rationale a dbt snapshot
+> implementation must satisfy.
+
 This doc exists because `dim_movie_scd2` and `dim_person_scd2`
 (`docs/modeling/scd-strategy.md`) are the hardest transformation in the
 platform: multi-attribute hash-diff change detection, correct

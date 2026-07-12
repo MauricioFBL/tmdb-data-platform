@@ -1,10 +1,23 @@
-# ADR-0004: dbt's Execution Engine for Gold Marts on Iceberg — Athena vs. Glue
+# ADR-0004: dbt's Execution Engine on Iceberg — Athena vs. Glue
+
+*(Originally scoped to Gold marts only; scope widened by
+[ADR-0005](./adr-0005-silver-moves-to-dbt.md) to cover Silver as well —
+the engine analysis below still applies to both.)*
 
 ## Status
 
-**Proposed** — not yet decided. ADR-0002 named `dbt-athena-community` as the
-adapter without weighing it against `dbt-glue`; this ADR closes that gap.
-Record the actual choice in the Decision section below.
+**Accepted — 2026-07-11.**
+
+> **Amendment**: this ADR's Recommendation section (below) leaned Athena,
+> reasoning about Gold-only usage. That reasoning is now partially moot:
+> [ADR-0005](./adr-0005-silver-moves-to-dbt.md) moves Silver's SCD2
+> processing to dbt as well, which means Spark/Glue compute is needed
+> regardless of which engine Gold uses — the "Athena is cheaper because
+> Gold's queries are light" argument no longer isolates a Gold-only cost,
+> since a Glue-based Silver already requires paying for Glue sessions
+> either way. Given that, running Gold through the same `dbt-glue` engine
+> that Silver now uses avoids maintaining *two* dbt engine configurations
+> for one project. The decision below reflects this.
 
 ## Context
 
@@ -219,27 +232,46 @@ way you two land on below.
 
 ## Decision
 
-*(To be filled in by the two engineers.)*
-
-- Chosen option:
-- Date decided:
-- Rationale:
+- **Chosen option**: `dbt-glue` (Option C shape — self-hosted Glue
+  interactive sessions), for both Silver and Gold dbt models.
+- **Date decided**: 2026-07-11
+- **Rationale**: with Silver moving to dbt (ADR-0005), Glue/Spark compute
+  is required regardless of the Gold engine choice — there is no
+  Gold-only cost to isolate anymore. Running everything dbt touches
+  through one engine avoids two separate dbt profiles/adapters/CI paths
+  for one project, and keeps the single Glue-version-to-Iceberg-version
+  compatibility story from `docs/deep-dives/iceberg-internals-and-glue.md`
+  applying uniformly instead of half the pipeline following Athena's
+  separate engine-version rules. The specific dbt-athena bugs documented
+  above (Section "Implementation detail: dbt-athena + Iceberg") are why
+  Athena isn't picked either, on top of the engine-consistency argument.
+  The open DynamoDB-lock-table question (below) is accepted as a
+  to-be-verified implementation detail, not a blocker.
 
 ## Consequences
 
-- If Athena is confirmed: harden `dbt/profiles.yml.example` with
-  `num_retries` capped and a note pinning the Athena workgroup to engine
-  v3; no infra changes needed.
-- If Glue is chosen instead: `dbt/profiles.yml.example` needs a full
-  rewrite to the `type: glue` shape above; verify the DynamoDB lock
-  question first (may require a new `modules/dynamodb/` or extending
-  `modules/orchestrator/` in `tmdb-data-platform-infra`); and
-  `docs/architecture/architecture-decisions/adr-0002-dbt-for-gold-marts.md`'s
-  "distinct, hireable skill" rationale should be revisited/amended since it
-  assumed Athena specifically.
-- Either way, the three concrete bug workarounds (or the Glue equivalent
-  hardening once evaluated) should be captured as a runbook item once
-  `docs/operations/runbook.md` is written (currently deferred to Phase 7).
+- `dbt/profiles.yml.example` needs a full rewrite to the `type: glue`
+  shape documented above (tracked as a sprint task).
+- The DynamoDB lock question must be verified against a real Glue 4.0+
+  session before the first Silver snapshot ships: if `lock-impl=
+  DynamoDbLockManager` turns out to be necessary, a `modules/dynamodb/`
+  (or an addition to `modules/glue/`) is needed in
+  `tmdb-data-platform-infra`; if it's legacy/optional on Glue 4.0+'s
+  native optimistic locking, omit it from the `conf` block entirely.
+  Tracked as an explicit sprint task rather than assumed either way.
+- ADR-0002's "distinct, hireable skill" rationale (Athena as a separate
+  serverless-SQL skill from Silver's PySpark) no longer applies — see
+  ADR-0005 for the portfolio-signal trade-off this decision now makes
+  instead (a deep dbt-snapshot-on-Iceberg-via-Glue skill, rather than two
+  separate toolchains).
+- The three dbt-athena bug workarounds documented above are now moot for
+  this project (not using that adapter) — left in this ADR for anyone
+  who revisits the Athena option later, not as an active task.
+- Glue session cost now applies to **both** Silver and Gold `dbt` runs,
+  not just Gold — the "under $0.05/run" Athena estimate above is no
+  longer the relevant comparison; budget for Glue session time on every
+  scheduled `dbt run`/`dbt snapshot` invocation instead (see ADR-0005's
+  cost note).
 
 ## Sources
 

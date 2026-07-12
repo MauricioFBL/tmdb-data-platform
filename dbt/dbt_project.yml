@@ -1,10 +1,11 @@
-name: "tmdb_gold_marts"
+name: "tmdb_silver_gold"
 version: "1.0.0"
 config-version: 2
 
 profile: "tmdb_data_platform"
 
 model-paths: ["models"]
+snapshot-paths: ["snapshots"]
 test-paths: ["tests"]
 macro-paths: ["macros"]
 
@@ -13,9 +14,14 @@ clean-targets:
   - "dbt_packages"
 
 models:
-  tmdb_gold_marts:
+  tmdb_silver_gold:
     staging:
       +materialized: view
     marts:
       +materialized: table
       +schema: gold
+
+snapshots:
+  tmdb_silver_gold:
+    +file_format: iceberg
+    +schema: silver

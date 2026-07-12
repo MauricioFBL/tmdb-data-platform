@@ -1,15 +1,22 @@
 # TMDB Data Platform — Initial Project Plan
 
-> **Amendment note (Phase 0, 2026-07-11)**: Sections 6, 11, 12, and 15 below
-> have been updated to reflect three architecture decisions made during
-> Phase 0 discovery — see `docs/architecture/architecture-decisions/`:
-> dbt now owns Gold-layer marts ([ADR-0002](./docs/architecture/architecture-decisions/adr-0002-dbt-for-gold-marts.md)),
+> **Amendment note (Phase 0, updated 2026-07-11)**: Sections 6, 10, 11, 12,
+> and 15 below are affected by architecture decisions made during Phase 0
+> discovery — see `docs/architecture/architecture-decisions/`:
+> **dbt now owns both Silver and Gold** ([ADR-0005](./docs/architecture/architecture-decisions/adr-0005-silver-moves-to-dbt.md),
+> superseding the original Gold-only decision in
+> [ADR-0002](./docs/architecture/architecture-decisions/adr-0002-dbt-for-gold-marts.md)),
+> running on the **`dbt-glue` adapter** ([ADR-0004](./docs/architecture/architecture-decisions/adr-0004-dbt-iceberg-engine-athena-vs-glue.md)),
 > the orchestrator choice (Airflow vs. Dagster) is not yet made
 > ([ADR-0001](./docs/architecture/architecture-decisions/adr-0001-orchestrator-choice.md), Status: Proposed),
 > and infrastructure now lives in a separate repo, `tmdb-data-platform-infra`
 > ([ADR-0003](./docs/architecture/architecture-decisions/adr-0003-two-repo-split.md)).
-> The rest of this document (scope, source system, data layers, SCD
-> strategy, phases) is unchanged from the original design.
+> **Section 10 (Historical Modeling Strategy) and Section 12 (Orchestration
+> Plan) below still describe Silver as a PySpark Glue job** — this is now
+> inaccurate per ADR-0005 (Silver is dbt snapshots) and is tracked as an
+> open documentation-update sprint task, not yet corrected inline. The rest
+> of this document (scope, source system, data layers, phases) is
+> unchanged from the original design.
 
 ## 1. Project Context
 
@@ -1114,13 +1121,13 @@ tmdb-data-platform/
 │   ├── schemas/
 │   └── tests/
 |
-├── glue/                 (no gold/ — see ADR-0002)
+├── glue/                 (Bronze only — see ADR-0005)
 │   ├── bronze/
-│   ├── silver/
 │   ├── common/
 │   └── tests/
 |
-├── dbt/                  (Gold marts only — see ADR-0002)
+├── dbt/                  (Silver + Gold, via dbt-glue — see ADR-0004/ADR-0005)
+│   ├── snapshots/        (Silver: SCD2 dims + historized relationships)
 │   ├── models/
 │   │   ├── staging/
 │   │   └── marts/
@@ -1133,7 +1140,7 @@ tmdb-data-platform/
 │   ├── macros/
 │   └── dbt_project.yml
 |
-├── sql/                  (no marts/ — moved to dbt/, see ADR-0002)
+├── sql/                  (no marts/ — moved to dbt/, see ADR-0002/ADR-0005)
 │   ├── athena/
 │   └── quality/
 |

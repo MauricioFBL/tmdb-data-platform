@@ -2,7 +2,13 @@
 
 ## Status
 
-Accepted — 2026-07-11
+**Superseded by [ADR-0005](./adr-0005-silver-moves-to-dbt.md) — 2026-07-11.**
+Silver now moves to dbt as well (via dbt-glue); this ADR's Context section
+also overstated why dbt snapshots were rejected — see ADR-0005 for the
+corrected reasoning. Kept below, unedited, as the historical record of what
+was decided first and why — this is not a live decision anymore.
+
+~~Accepted — 2026-07-11~~
 
 ## Context
 

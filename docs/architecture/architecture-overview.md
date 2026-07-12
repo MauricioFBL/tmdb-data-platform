@@ -1,8 +1,18 @@
 # Architecture Overview
 
+> **STALE — pending rewrite (sprint task).** The component table and
+> diagram below still show Silver as a PySpark/Glue responsibility. Per
+> [ADR-0005](./architecture-decisions/adr-0005-silver-moves-to-dbt.md),
+> Silver is now dbt (via `dbt-glue`) — only Bronze remains PySpark. The
+> layer-boundary rules (bottom of this doc) mostly still hold but need a
+> pass to replace "Silver Glue job" language with "Silver dbt snapshot."
+
 Updates `PROJECT_PLAN.md` Sections 6/7 for the decisions recorded in
-`architecture-decisions/`: dbt owns Gold marts
-([ADR-0002](./architecture-decisions/adr-0002-dbt-for-gold-marts.md)),
+`architecture-decisions/`: dbt owns Silver and Gold
+([ADR-0005](./architecture-decisions/adr-0005-silver-moves-to-dbt.md),
+superseding [ADR-0002](./architecture-decisions/adr-0002-dbt-for-gold-marts.md)),
+via the `dbt-glue` adapter
+([ADR-0004](./architecture-decisions/adr-0004-dbt-iceberg-engine-athena-vs-glue.md)),
 the orchestrator is not yet chosen
 ([ADR-0001](./architecture-decisions/adr-0001-orchestrator-choice.md)),
 and infrastructure lives in a separate repo

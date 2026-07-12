@@ -1,10 +1,20 @@
 # SCD Strategy
 
-Formalizes `PROJECT_PLAN.md` Section 10. All SCD Type 2 and snapshot logic
-is implemented as PySpark `MERGE INTO` against Iceberg tables in
-`glue/silver/` — see `docs/deep-dives/scd2-iceberg-merge-patterns.md` for
-the actual merge mechanics, and `docs/architecture/architecture-decisions/adr-0002-dbt-for-gold-marts.md`
-for why this is PySpark and not dbt snapshots.
+> **Partially stale — pending rewrite (sprint task).** This doc still says
+> SCD Type 2 is implemented as hand-rolled PySpark `MERGE INTO`. Per
+> [ADR-0005](../architecture/architecture-decisions/adr-0005-silver-moves-to-dbt.md),
+> it's now dbt snapshots via `dbt-glue`. The grain statements, attribute
+> lists, and the "attribute vs. relationship vs. metric" classification
+> rule below are unaffected and still the source of truth — only the "how
+> it's implemented" framing needs updating.
+
+Formalizes `PROJECT_PLAN.md` Section 10. SCD Type 2 and the historized
+relationships are implemented as dbt **snapshots** (via `dbt-glue`, see
+[ADR-0004](../architecture/architecture-decisions/adr-0004-dbt-iceberg-engine-athena-vs-glue.md)/[ADR-0005](../architecture/architecture-decisions/adr-0005-silver-moves-to-dbt.md))
+against Iceberg tables in `dbt/snapshots/` — see
+`docs/deep-dives/scd2-iceberg-merge-patterns.md` for the underlying merge
+mechanics/risk reasoning (currently written against the superseded PySpark
+approach; still valid as design rationale, not as literal code).
 
 ## Decision rule: which strategy for which attribute
 
