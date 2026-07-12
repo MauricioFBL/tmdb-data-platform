@@ -11,3 +11,9 @@ tmdb_data_platform:
       database: awsdatacatalog
       work_group: tmdb-data-platform
       threads: 4
+      # work_group must run Athena engine v3 — MERGE INTO on Iceberg is
+      # only supported there (see ADR-0004).
+      # num_retries capped low: the adapter's default retry (5) blindly
+      # re-runs failed Iceberg CTAS/timeout errors that won't self-heal
+      # on retry (dbt-labs/dbt-adapters #1739, #1813) — see ADR-0004.
+      num_retries: 1

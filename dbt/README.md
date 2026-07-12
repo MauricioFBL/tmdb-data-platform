@@ -2,10 +2,15 @@
 
 Scope is deliberately narrow: **dbt only builds the five Gold-layer data
 marts** (`PROJECT_PLAN.md` Section 11) as SQL models reading Silver Iceberg
-tables through Athena (`dbt-athena-community` adapter). Bronze parsing and
-Silver SCD2/snapshot logic stay in PySpark/Glue — see
-[ADR-0002](../docs/architecture/architecture-decisions/adr-0002-dbt-for-gold-marts.md)
+tables. Bronze parsing and Silver SCD2/snapshot logic stay in PySpark/Glue
+— see [ADR-0002](../docs/architecture/architecture-decisions/adr-0002-dbt-for-gold-marts.md)
 for why.
+
+**Adapter: pending [ADR-0004](../docs/architecture/architecture-decisions/adr-0004-dbt-iceberg-engine-athena-vs-glue.md)**
+(`dbt-athena-community` vs. `dbt-glue`) — currently Proposed, leaning
+Athena. `profiles.yml.example` below assumes Athena; if ADR-0004 resolves
+to Glue instead, that file needs a full rewrite to the `type: glue` shape
+documented in ADR-0004, not just a tweak.
 
 - `models/staging/` — thin, non-materialized views over Silver Iceberg tables (naming/typing alignment only — no business logic).
 - `models/marts/movie_lifecycle/` — status/date/completeness history over time.

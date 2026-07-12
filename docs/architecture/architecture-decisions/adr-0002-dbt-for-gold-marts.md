@@ -48,8 +48,10 @@ skill already demonstrated by Bronze/Silver.
   PySpark `MERGE INTO` against Iceberg tables (see
   `docs/deep-dives/scd2-iceberg-merge-patterns.md`). dbt snapshots are
   explicitly rejected for this layer.
-- **Gold**: dbt only, via the `dbt-athena-community` adapter, querying
-  Silver Iceberg tables through Athena. The five marts from
+- **Gold**: dbt only. The specific adapter (`dbt-athena-community` vs.
+  `dbt-glue`) is its own decision — see
+  [ADR-0004](./adr-0004-dbt-iceberg-engine-athena-vs-glue.md) — this ADR
+  only decides that dbt, in general, owns this layer. The five marts from
   `PROJECT_PLAN.md` Section 11 (`movie_lifecycle`, `movie_performance`,
   `talent_collaboration`, `streaming_availability`, `data_quality`) become
   dbt models under `dbt/models/marts/`, with a thin `dbt/models/staging/`
@@ -64,8 +66,10 @@ skill already demonstrated by Bronze/Silver.
   SQL/dbt for Gold) instead of one — a deliberate trade-off for skill
   breadth and fit-for-purpose tooling, at the cost of a second toolchain to
   maintain (dbt project setup, `profiles.yml`, a second CI job).
-- Athena query cost applies to every `dbt run` against Gold models (Athena
-  bills per TB scanned). Silver tables should be well-partitioned
+- Query/session cost applies to every `dbt run` against Gold models,
+  shaped differently depending on which engine ADR-0004 selects (Athena
+  bills per TB scanned; Glue bills per session DPU-hour). Silver tables
+  should be well-partitioned
   (by `ingestion_date` / business-relevant date columns) so Gold model
   scans stay cheap; this becomes a concrete requirement for the Silver
   Glue jobs, not just a Gold-side concern.
