@@ -19,7 +19,12 @@ dev = [
     "mypy>=1.9",
 ]
 spark = [
-    "pyspark>=3.5",
+    # Pinned to the 3.5.x line to match AWS Glue 5.0's runtime (Spark 3.5.4,
+    # Python 3.11 — the Glue version this repo's Python floor implies).
+    # Iceberg's spark-runtime artifact is versioned per Spark major.minor,
+    # so an unpinned pyspark can silently resolve to a version Glue doesn't
+    # run and Iceberg doesn't ship a matching runtime jar for.
+    "pyspark>=3.5,<3.6",
 ]
 dbt = [
     "dbt-athena-community>=1.7",

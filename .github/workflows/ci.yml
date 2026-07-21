@@ -15,8 +15,13 @@ jobs:
         with:
           python-version: "3.11"
 
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
       - name: Install dependencies
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev,spark]"
 
       - name: Lint
         run: |
@@ -24,9 +29,7 @@ jobs:
           black --check .
 
       - name: Unit tests
-        run: pytest tests/unit ingestion/tests -v
+        run: pytest tests/unit ingestion/tests glue/tests -v
 
-      # PySpark-based glue/tests and dbt compile/test are deliberately
-      # left out of this initial CI job — added once the corresponding
-      # code exists (Phase 1/2/6), to avoid a CI job that fails on an
-      # empty scaffold.
+      # dbt compile/test deliberately left out until dbt Silver/Gold code
+      # exists (Phase 3/6).
