@@ -52,7 +52,10 @@ def test_build_bronze_movie_details_flattens_scalars(
     assert details["revenue"] == 100853753
     assert details["runtime"] == 139
     assert details["release_date"] == "1999-10-15"
-    assert details["vote_count"] == 26280
+    assert details["vote_count"] == 32368
+    assert details["origin_country"] == ["US"]
+    assert details["softcore"] is False
+    assert {c["iso_3166_1"] for c in details["production_countries"]} == {"DE", "US"}
 
 
 def test_build_bronze_movie_genres_explodes_array(
@@ -61,10 +64,10 @@ def test_build_bronze_movie_genres_explodes_array(
     raw_df = read_raw_movie_details(spark, raw_envelope_dir)
     genres = build_bronze_movie_genres(raw_df).collect()
 
-    assert len(genres) == 1
-    assert genres[0]["tmdb_movie_id"] == 550
-    assert genres[0]["genre_id"] == 18
-    assert genres[0]["genre_name"] == "Drama"
+    assert len(genres) == 2
+    assert all(g["tmdb_movie_id"] == 550 for g in genres)
+    genre_names = {g["genre_name"] for g in genres}
+    assert genre_names == {"Drama", "Thriller"}
 
 
 def test_build_bronze_movie_production_companies_explodes_array(
@@ -73,9 +76,15 @@ def test_build_bronze_movie_production_companies_explodes_array(
     raw_df = read_raw_movie_details(spark, raw_envelope_dir)
     companies = build_bronze_movie_production_companies(raw_df).collect()
 
-    assert len(companies) == 2
+    assert len(companies) == 5
     names = {c["company_name"] for c in companies}
-    assert names == {"Regency Enterprises", "Fox 2000 Pictures"}
+    assert names == {
+        "Regency Enterprises",
+        "Fox 2000 Pictures",
+        "Linson Entertainment",
+        "20th Century Fox",
+        "Taurus Film",
+    }
 
 
 def test_build_bronze_movie_collections_excludes_null_belongs_to_collection(

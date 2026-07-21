@@ -34,7 +34,10 @@ _MOVIE_DETAILS_SCHEMA_DDL = (
     "release_date string, runtime int, budget bigint, revenue bigint, "
     "original_language string, adult boolean, video boolean, "
     "popularity double, vote_average double, vote_count int, "
-    "poster_path string, backdrop_path string, imdb_id string"
+    "poster_path string, backdrop_path string, imdb_id string, "
+    "origin_country array<string>, softcore boolean, "
+    "production_countries array<struct<iso_3166_1:string,name:string>>, "
+    "spoken_languages array<struct<english_name:string,iso_639_1:string,name:string>>"
 )
 _MOVIE_GENRES_SCHEMA_DDL = (
     "pipeline_run_id string, request_id string, extraction_timestamp timestamp, "
@@ -85,6 +88,10 @@ def build_bronze_movie_details(df: DataFrame) -> DataFrame:
         F.col("payload.poster_path").alias("poster_path"),
         F.col("payload.backdrop_path").alias("backdrop_path"),
         F.col("payload.imdb_id").alias("imdb_id"),
+        F.col("payload.origin_country").alias("origin_country"),
+        F.col("payload.softcore").alias("softcore"),
+        F.col("payload.production_countries").alias("production_countries"),
+        F.col("payload.spoken_languages").alias("spoken_languages"),
     )
 
 

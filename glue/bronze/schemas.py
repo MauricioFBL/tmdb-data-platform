@@ -1,11 +1,11 @@
 """Explicit schemas for the raw Movie Details envelope — no inference.
 
-WARNING: the payload field names below (belongs_to_collection, genres,
-production_companies, ...) are sourced from TMDB's publicly documented
-response shape, NOT independently verified against a live API response —
-this repo doesn't document their internal struct fields anywhere. Verify
-against a real `GET /movie/{movie_id}` call before relying on this in
-production; see the ingestion team's setup notes for how to get a token.
+Verified against a live GET /movie/{movie_id} response on 2026-07-21
+(movie 550 and 862). belongs_to_collection, genres[], and
+production_companies[] struct shapes all matched TMDB's documented public
+schema exactly. Two fields absent from that public documentation were
+found on the live response and added: origin_country and softcore (see
+inline notes below). Re-verify if TMDB's response shape changes.
 """
 
 from __future__ import annotations
@@ -73,6 +73,11 @@ MOVIE_DETAILS_PAYLOAD_SCHEMA = StructType(
         StructField("homepage", StringType(), nullable=True),
         StructField("id", IntegerType(), nullable=True),
         StructField("imdb_id", StringType(), nullable=True),
+        # Not in TMDB's older public docs — confirmed present on a live
+        # response fetched 2026-07-21 (movie 550). List of production origin
+        # country codes, distinct from production_countries below (which
+        # carries full names too).
+        StructField("origin_country", ArrayType(StringType()), nullable=True),
         StructField("original_language", StringType(), nullable=True),
         StructField("original_title", StringType(), nullable=True),
         StructField("overview", StringType(), nullable=True),
@@ -85,6 +90,11 @@ MOVIE_DETAILS_PAYLOAD_SCHEMA = StructType(
         StructField("release_date", StringType(), nullable=True),
         StructField("revenue", LongType(), nullable=True),
         StructField("runtime", IntegerType(), nullable=True),
+        # Undocumented anywhere — confirmed present (false) on the same live
+        # response. Meaning unconfirmed; likely a content-classification
+        # flag. Kept as-is rather than dropped, per Bronze's "preserve what
+        # the source sends" responsibility.
+        StructField("softcore", BooleanType(), nullable=True),
         StructField("spoken_languages", ArrayType(SPOKEN_LANGUAGE_SCHEMA), nullable=True),
         StructField("status", StringType(), nullable=True),
         StructField("tagline", StringType(), nullable=True),
