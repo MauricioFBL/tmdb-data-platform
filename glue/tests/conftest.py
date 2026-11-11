@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import uuid
 from collections.abc import Iterator
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
@@ -34,7 +34,7 @@ def _write_envelope_line(path: Path, movie_id: int, payload: dict[str, object]) 
         endpoint="/movie/{movie_id}",
         source_entity_id=str(movie_id),
         http_status=200,
-        extraction_timestamp=datetime(2026, 7, 16, 12, 0, 0, tzinfo=timezone.utc),
+        extraction_timestamp=datetime(2026, 7, 16, 12, 0, 0, tzinfo=UTC),
         ingestion_date=date(2026, 7, 16),
         payload=payload,
     )

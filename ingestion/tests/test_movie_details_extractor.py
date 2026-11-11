@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 from unittest.mock import MagicMock
@@ -44,7 +44,7 @@ def test_extract_movie_writes_expected_key_and_round_trips_payload(
     session_mock = _session_returning(fixture_bytes)
     client = TMDBClient(access_token="test-token", session=session_mock)
 
-    fixed_clock = lambda: datetime(2026, 7, 16, 12, 0, 0, tzinfo=timezone.utc)  # noqa: E731
+    fixed_clock = lambda: datetime(2026, 7, 16, 12, 0, 0, tzinfo=UTC)
     extractor = MovieDetailsExtractor(
         client=client,
         s3_client=s3,

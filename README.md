@@ -20,7 +20,7 @@ for the specific technology decisions and their trade-offs.
 | `orchestration/`    | Pipeline orchestration (Airflow or Dagster — pending [ADR-0001](./docs/architecture/architecture-decisions/adr-0001-orchestrator-choice.md)) |
 | `ingestion/`        | TMDB API client, extractors, pagination, retries, raw-layer schemas |
 | `glue/`             | PySpark jobs: Bronze parsing only (Silver moved to dbt snapshots, see [ADR-0005](./docs/architecture/architecture-decisions/adr-0005-silver-moves-to-dbt.md); no Gold — dbt owns marts, see [ADR-0002](./docs/architecture/architecture-decisions/adr-0002-dbt-for-gold-marts.md)) |
-| `dbt/`              | dbt project: Silver SCD2 snapshots and Gold-layer data marts on top of Bronze Iceberg tables via Athena |
+| `dbt/`              | dbt project: Silver SCD2 snapshots and Gold-layer data marts on top of Bronze Iceberg tables via `dbt-glue` (ADR-0004/0005); Athena is the query layer |
 | `sql/`              | Ad hoc Athena exploration queries and non-dbt data quality checks |
 | `config/`           | Endpoint configs, environment configs, data quality thresholds, table registry |
 | `dashboards/`       | Analytical and operational dashboard definitions |
@@ -100,7 +100,9 @@ tests/
 
 ## Status
 
-Phase 0 — Discovery and Design (see `PROJECT_PLAN.md` Section 19). The
-`ingestion/` → `glue/` Bronze vertical slice for Movie Details is
-implemented and tested; Silver (dbt snapshots), Gold marts, and the
-orchestrator choice are still open.
+Phase 0 (Discovery and Design) is complete. Phases 1–2 are in progress
+(see `PROJECT_PLAN.md` Section 19): the `ingestion/` → `glue/` Bronze
+vertical slice for Movie Details is implemented and unit-tested, but it has
+not yet run against AWS, because the Terraform in `tmdb-data-platform-infra`
+is still a scaffold. Silver (dbt snapshots), the Gold marts, and the
+orchestrator choice (ADR-0001) are still open.

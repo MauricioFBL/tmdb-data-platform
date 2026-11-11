@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from pyspark.sql import SparkSession
@@ -113,7 +113,7 @@ def test_build_bronze_movie_collections_includes_present_collection(
         endpoint="/movie/{movie_id}",
         source_entity_id="550",
         http_status=200,
-        extraction_timestamp=datetime(2026, 7, 16, 12, 0, 0, tzinfo=timezone.utc),
+        extraction_timestamp=datetime(2026, 7, 16, 12, 0, 0, tzinfo=UTC),
         ingestion_date=date(2026, 7, 16),
         payload=payload,
     )
