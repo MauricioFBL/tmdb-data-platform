@@ -7,7 +7,7 @@ import os
 import uuid
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from typing import Any, Final
 
 from ingestion.extractors.movie_ids import get_movie_ids
@@ -41,7 +41,7 @@ class MovieDetailsExtractor:
         bucket: str | None = None,
         raw_prefix: str | None = None,
         pipeline_run_id: str | None = None,
-        clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
+        clock: Callable[[], datetime] = lambda: datetime.now(UTC),
     ) -> None:
         self._client = client
         self._s3_client = s3_client

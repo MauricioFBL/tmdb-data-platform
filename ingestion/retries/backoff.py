@@ -58,11 +58,16 @@ def compute_backoff_delay(
     return delay
 
 
+# Shared default: RetryConfig is frozen, so one module-level instance is safe to
+# reuse and avoids a function call in the argument default (ruff B008).
+DEFAULT_RETRY_CONFIG = RetryConfig()
+
+
 def retry_with_backoff(
     func: Callable[[], ResponseT],
     is_retryable: Callable[[ResponseT], bool],
     get_retry_after: Callable[[ResponseT], float | None],
-    config: RetryConfig = RetryConfig(),
+    config: RetryConfig = DEFAULT_RETRY_CONFIG,
     sleep_fn: Callable[[float], None] = time.sleep,
 ) -> ResponseT:
     """Call ``func`` and retry while ``is_retryable`` reports 429s.

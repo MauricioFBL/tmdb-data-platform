@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 import pytest
 from pydantic import ValidationError
@@ -17,7 +17,7 @@ def _valid_kwargs() -> dict[str, object]:
         "endpoint": "/movie/{movie_id}",
         "source_entity_id": "550",
         "http_status": 200,
-        "extraction_timestamp": datetime(2026, 7, 16, tzinfo=timezone.utc),
+        "extraction_timestamp": datetime(2026, 7, 16, tzinfo=UTC),
         "ingestion_date": date(2026, 7, 16),
         "payload": {"id": 550},
     }

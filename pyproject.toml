@@ -1,7 +1,7 @@
 [project]
 name = "tmdb-data-platform"
 version = "0.1.0"
-description = "TMDB data platform — ingestion, Glue/PySpark processing, and dbt Gold marts"
+description = "TMDB data platform — ingestion, Glue/PySpark processing, and dbt Silver/Gold (dbt-glue)"
 requires-python = ">=3.11"
 dependencies = [
     "requests>=2.31",
@@ -15,14 +15,22 @@ dev = [
     "pytest-cov>=5.0",
     "moto[s3,glue]>=5.0",
     "black>=24.0",
-    "ruff>=0.4",
+    # Pinned to a minor line: ruff's default rule set changes between minors and
+    # would otherwise break CI lint without any code change.
+    "ruff>=0.17,<0.18",
     "mypy>=1.9",
 ]
 spark = [
-    "pyspark>=3.5",
+    # Pinned to the 3.5.x line to match AWS Glue 5.0's runtime (Spark 3.5.4,
+    # Python 3.11 — the Glue version this repo's Python floor implies).
+    # Iceberg's spark-runtime artifact is versioned per Spark major.minor,
+    # so an unpinned pyspark can silently resolve to a version Glue doesn't
+    # run and Iceberg doesn't ship a matching runtime jar for.
+    "pyspark>=3.5,<3.6",
 ]
 dbt = [
-    "dbt-athena-community>=1.7",
+    # dbt-glue, not dbt-athena: ADR-0004 resolved the dbt engine to Glue (ADR-0005).
+    "dbt-glue>=1.9,<2.0",
 ]
 
 [tool.black]
